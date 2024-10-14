@@ -61,8 +61,8 @@ class SubjectViewSet(ViewSet):
         return Response(data={'result': "Subject successfully deleted", 'ok': True}, status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        operation_summary='List of subject',
-        operation_description='List of subject',
+        operation_summary='List of subjects',
+        operation_description='List of subjects',
         responses={200: SubjectSerializer()},
         tags=['Subject']
     )
@@ -110,7 +110,7 @@ class QuestionViewSet(ViewSet):
 
     @swagger_auto_schema(
         operation_summary='Delete question, pk receive question id',
-        operation_description='Delete subject, pk receive question id',
+        operation_description='Delete question, pk receive question id',
         responses={204: QuestionSerializer()},
         tags=['Question']
     )
@@ -123,18 +123,25 @@ class QuestionViewSet(ViewSet):
         return Response(data={'result': "Question successfully deleted", 'ok': True}, status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        operation_summary='List of question',
-        operation_description='List of question',
+        operation_summary='List of questions',
+        operation_description='List of questions',
         responses={200: QuestionSerializer()},
         tags=['Question']
     )
-    def list_subjects(self, request):
+    def list_questions(self, request):
         questions = Question.objects.all()
         serializer = QuestionSerializer(questions, many=True, context={'request': request})
         return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_200_OK)
 
 
 class AnswerViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Create answer',
+        operation_description='Create answer',
+        request_body=AnswerSerializer(),
+        responses={201: AnswerSerializer()},
+        tags=['Answer']
+    )
     def create_answer(self, request):
         data = request.data
         serializer = AnswerSerializer(data=data, context={'request': request})
@@ -143,3 +150,48 @@ class AnswerViewSet(ViewSet):
 
         serializer.save()
         return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='Update answer, pk receive answer id',
+        operation_description='Update answer, pk receive answer id',
+        request_body=AnswerSerializer(),
+        responses={200: AnswerSerializer()},
+        tags=['Answer']
+    )
+    def update_answer(self, request, pk):
+        data = request.data
+        answer = Answers.obejcts.filter(id=pk, question__subject__user_id=request.user.id).first()
+        if not answer:
+            raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
+
+        serializer = AnswerSerializer(answer, data=data, partial=True, context={'request': request})
+        if not serializer.is_valid():
+            raise CustomApiException(error_code=ErrorCodes.VALIDATION_FAILED, message=serializer.errors)
+
+        serializer.save()
+        return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary='Delete answer, pk receive answer id',
+        operation_description='Delete answer, pk receive answer id',
+        responses={204: AnswerSerializer()},
+        tags=['Answer']
+    )
+    def delete_answer(self, request, pk):
+        answer = Answers.objects.filter(id=pk, question__subject__user_id=request.user.id).first()
+        if not answer:
+            raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
+
+        answer.delete()
+        return Response(data={'result': "Answer successfully deleted", 'ok': True}, status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        operation_summary='List of answers',
+        operation_description='List of answers',
+        responses={200: QuestionSerializer()},
+        tags=['Question']
+    )
+    def list_answers(self, request):
+        answers = Answers.objects.all()
+        serializer = QuestionSerializer(answers, many=True, context={'request': request})
+        return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_200_OK)
