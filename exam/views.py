@@ -1,50 +1,55 @@
 from exceptions.error_message import ErrorCodes
 from exceptions.exception import CustomApiException
 from .models import Subject, Question, Answers, Exam, Participant
-from .serializers import SubjectSerializer, QuestionSerializer, AnswerSerializer, ExamSerializer, ParticipantSerializer
+from .serializers import SubjectSerializer, QuestionSerializer, AnswerSerializer, ExamSerializer, ParticipantSerializer, \
+    UserAnswerSerializer
 from rest_framework.viewsets import ViewSet
-from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import UserAnswer
 from .models import Exam, Question, UserAnswer, Option
-from django.contrib.auth.decorators import login_required
-
-@login_required
-def submit_answer(self, request, exam_id, question_id):
-    question = get_object_or_404(Question, id=question_id)
-    
-    if request.method == 'POST':
-        if question.question_type == 'MCQ':
-            selected_option_id = request.POST.get('option')
-            selected_option = get_object_or_404(Option, id=selected_option_id)
-            user_answer = UserAnswer.objects.create(
-                user=request.user, 
-                question=question, 
-                selected_option=selected_option
-            )
-        elif question.question_type == 'OPEN':
-            open_answer = request.POST.get('open_answer')
-            user_answer = UserAnswer.objects.create(
-                user=request.user, 
-                question=question, 
-                open_answer=open_answer
-            )
-
 
 class ExamViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Submit answer, pk receive question id',
+        request_body=UserAnswerSerializer(),
+        responses={200: UserAnswerSerializer()},
+        tags=['Exam']
+    )
+    def submit_answer(self, request, pk):
+        question = Question.objects.filter(id=pk).first()
+        if not question.exam.in_process:
+            raise CustomApiException(error_code=ErrorCodes.INVALID_INPUT, message="Exam time expired")
 
-  def grade_open_answer(self, request, answer_id):
-    answer =
-UserAnswer.objects.filter(id=answer_id)
-    
-     grade = request.data.get('is_correct')  
-        answer.is_correct = grade
-        answer.save()
-    
-    return Response(data={"result": answer, "ok": True}, status=status.)
+        if not question:
+            raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
+
+        if question.type == 2:
+            selected_option_id = request.data.get('option')
+            selected_option = Option.objects.filter(id=selected_option_id).first()
+            if not selected_option:
+                raise CustomApiException(error_code=ErrorCodes.INVALID_INPUT, message="Invalid option selected")
+
+            user_answer = UserAnswer.objects.create(
+                user=request.user,
+                question=question,
+                selected_option=selected_option
+            )
+            serializer = UserAnswerSerializer(user_answer, context={'request': request})
+            return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+
+        elif question.type == 1:
+            open_answer = request.data.get('open_answer')
+            user_answer = UserAnswer.objects.create(
+                user=request.user,
+                question=question,
+                open_answer=open_answer
+            )
+            serializer = UserAnswerSerializer(user_answer, context={'request': request})
+            return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+        raise CustomApiException(error_code=ErrorCodes.NOT_FOUND, message="Question not found")
 
     @swagger_auto_schema(
         operation_summary='Create exam',
@@ -61,6 +66,41 @@ UserAnswer.objects.filter(id=answer_id)
 
         serializer.save()
         return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='Update exam, pk receive exam id',
+        operation_description='Update exam, pk receive exam id',
+        request_body=ExamSerializer(),
+        responses={200: ExamSerializer()},
+        tags=['Exam']
+    )
+    def update_exam(self, request, pk):
+        data = request.data
+        exam = Exam.objects.filter(id=pk, user_id=request.user.id).first()
+        if not exam:
+            raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
+
+        serializer = ExamSerializer(exam, data=data, partial=True, context={'request': request})
+        if not serializer.is_valid():
+            raise CustomApiException(error_code=ErrorCodes.VALIDATION_FAILED, message=serializer.errors)
+
+        serializer.save()
+        return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary='Delete exam, pk receive exam id',
+        operation_description='Delete exam, pk receive exam id',
+        responses={204: ExamSerializer()},
+        tags=['Exam']
+    )
+    def delete_exam(self, request, pk):
+        exam = Exam.objects.filter(id=pk, user_id=request.user.id).first()
+        if not exam:
+            raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
+
+        exam.delete()
+        return Response(data={'result': "Exam successfully deleted", 'ok': True}, status=status.HTTP_204_NO_CONTENT)
+
 
 
 class ParticipantViewSet(ViewSet):
@@ -112,7 +152,7 @@ class SubjectViewSet(ViewSet):
     )
     def update_subject(self, request, pk):
         data = request.data
-        subject = Subject.obejcts.filter(id=pk, user_id=request.user.id).first()
+        subject = Subject.objects.filter(id=pk, user_id=request.user.id).first()
         if not subject:
             raise CustomApiException(error_code=ErrorCodes.NOT_FOUND)
 

@@ -49,6 +49,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'exam.middlewares.ExamActionRoleBasedRedirectMiddleware',
+    'exam.middlewares.ExamCreateRoleBasedRedirectMiddleware',
+    'exam.middlewares.ParticipantCreateRoleBasedRedirectMiddleware',
+    'exam.middlewares.SubjectCreateRoleBasedRedirectMiddleware',
+    'exam.middlewares.SubjectActionRoleBasedRedirectMiddleware',
+    'exam.middlewares.QuestionCreateRoleBasedRedirectMiddleware',
+    'exam.middlewares.QuestionActionRoleBasedRedirectMiddleware',
+    'exam.middlewares.AnswerCreateRoleBasedRedirectMiddleware',
+    'exam.middlewares.AnswerActionRoleBasedRedirectMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

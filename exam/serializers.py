@@ -1,5 +1,10 @@
-from .models import Subject, Question, Answers, Exam, Participant
+from .models import Subject, Question, Answers, Exam, Participant, UserAnswer
 from rest_framework import serializers
+
+class UserAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAnswer
+        fields = ['id', 'user', 'question', 'selected_option', 'open_answer', 'is_correct']
 
 class ParticipantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +25,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'subject', 'question', 'type', 'is_active']
+        fields = ['id', 'subject', 'question', 'type']
 
 
 class AnswerSerializer(serializers.ModelSerializer):

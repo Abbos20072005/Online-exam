@@ -3,26 +3,47 @@ from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 
 from utils.check_token import get_role
-from .views import SubjectViewSet, QuestionViewSet, AnswerViewSet
+from .views import SubjectViewSet, QuestionViewSet, AnswerViewSet, ParticipantViewSet, ExamViewSet
 
 
-class LeadDetailRoleBasedRedirectMiddleware(MiddlewareMixin):
+class ExamActionRoleBasedRedirectMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        student_id = view_kwargs.get('pk')
-        if student_id is None:
+        exam_id = view_kwargs.get('pk')
+        if exam_id is None:
             return None
-        target_urls = reverse(viewname='detail_admin', kwargs={'pk': student_id})
+        target_urls = reverse(viewname='exam_action', kwargs={'pk': exam_id})
         if request.path in target_urls:
             role = get_role(request.headers.get('Authorization'))
 
-            if role in [1, 2]:
-                return (request,
-                        *view_args,
-                        ** view_kwargs)
-            if role in [4]:
-                return (request,
-                        *view_args,
-                        ** view_kwargs)
+            if role in [1]:
+                return SubjectViewSet.as_view({'patch': 'update_exam', 'delete': 'delete_exam'})(request,
+                                                                                                 *view_args,
+                                                                                                 **view_kwargs)
+
+            return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
+        return None
+
+
+class ExamCreateRoleBasedRedirectMiddleware(MiddlewareMixin):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        target_urls = [reverse('create_exam')]
+        if request.path in target_urls:
+            role = get_role(request.headers.get('Authorization'))
+
+            if role in [1]:
+                return ExamViewSet.as_view({'post': 'create_exam'})(request, *view_args, **view_kwargs)
+            return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
+        return None
+
+
+class ParticipantCreateRoleBasedRedirectMiddleware(MiddlewareMixin):
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        target_urls = [reverse('create_participant')]
+        if request.path in target_urls:
+            role = get_role(request.headers.get('Authorization'))
+
+            if role in [2]:
+                return ParticipantViewSet.as_view({'post': 'create_participant'})(request, *view_args, **view_kwargs)
             return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
         return None
 
@@ -80,8 +101,8 @@ class QuestionActionRoleBasedRedirectMiddleware(MiddlewareMixin):
 
             if role in [1]:
                 return SubjectViewSet.as_view({'patch': 'update_question', 'delete': 'delete_question'})(request,
-                                                                                                       *view_args,
-                                                                                                       **view_kwargs)
+                                                                                                         *view_args,
+                                                                                                         **view_kwargs)
 
             return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
         return None
@@ -110,10 +131,8 @@ class AnswerActionRoleBasedRedirectMiddleware(MiddlewareMixin):
 
             if role in [1]:
                 return SubjectViewSet.as_view({'patch': 'update_answer', 'delete': 'delete_answer'})(request,
-                                                                                                       *view_args,
-                                                                                                       **view_kwargs)
+                                                                                                     *view_args,
+                                                                                                     **view_kwargs)
 
             return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
         return None
-
-
