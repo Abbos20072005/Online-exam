@@ -8,7 +8,22 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework import status
 
+from .models import UserAnswer
+
+
+
 class ExamViewSet(ViewSet):
+
+  def grade_open_answer(self, request, answer_id):
+    answer =
+UserAnswer.objects.filter(id=answer_id)
+    
+     grade = request.data.get('is_correct')  
+        answer.is_correct = grade
+        answer.save()
+    
+    return Response(data={"result": answer, "ok": True}, status=status.)
+
     @swagger_auto_schema(
         operation_summary='Create exam',
         operation_description='Create Exam',
