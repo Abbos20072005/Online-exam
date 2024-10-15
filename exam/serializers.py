@@ -25,7 +25,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'subject', 'question', 'type']
+        fields = ['id', 'subject', 'question', 'type', 'exam', 'correct_option']
 
 
 class AnswerSerializer(serializers.ModelSerializer):
