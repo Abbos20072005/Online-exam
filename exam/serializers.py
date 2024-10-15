@@ -14,7 +14,7 @@ class ParticipantSerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
-        fields = ['id', 'title', 'start_date', 'end_date', 'student_number']
+        fields = ['id', "user", 'title', 'start_date', 'end_date', 'student_number']
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:

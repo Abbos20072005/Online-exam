@@ -60,6 +60,7 @@ class ExamViewSet(ViewSet):
     )
     def create_exam(self, request):
         data = request.data
+        data['user'] = request.user.id
         serializer = ExamSerializer(data=data, context={'request': request})
         if not serializer.is_valid():
             raise CustomApiException(error_code=ErrorCodes.VALIDATION_FAILED, message=serializer.errors)

@@ -9,15 +9,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from .utils import login_validation
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema
-
+from drf_yasg.utils import swagger_auto_schema
 
 class AuthViewSet(ViewSet):
-    @extend_schema(
-        request=UserSerializer,
-        responses={200: UserSerializer},
-        description="For create user",
-        methods=["POST"],
+    @swagger_auto_schema(
+        operation_summary="User register",
+        operation_description="User register",
+        request_body=UserSerializer(),
+        responses={201: UserSerializer()},
         tags=['Authorization']
     )
     def user_register(self, request):
@@ -32,11 +31,11 @@ class AuthViewSet(ViewSet):
         serializer.save()
         return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
 
-    @extend_schema(
-        request=UserLoginSerializer,
-        responses={200: UserLoginSerializer},
-        description="For login user",
-        methods=['POST'],
+    @swagger_auto_schema(
+        operation_summary="User login",
+        operation_description="User login",
+        request_body=UserSerializer(),
+        responses={201: UserSerializer()},
         tags=['Authorization']
     )
     def user_login(self, request):
@@ -49,6 +48,7 @@ class AuthViewSet(ViewSet):
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
         access_token['login_time'] = login_time
+        access_token['role'] = user.role
 
         user.last_login = login_time
         user.save()

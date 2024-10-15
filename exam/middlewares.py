@@ -16,7 +16,7 @@ class ExamActionRoleBasedRedirectMiddleware(MiddlewareMixin):
             role = get_role(request.headers.get('Authorization'))
 
             if role in [1]:
-                return SubjectViewSet.as_view({'patch': 'update_exam', 'delete': 'delete_exam'})(request,
+                return ExamViewSet.as_view({'patch': 'update_exam', 'delete': 'delete_exam'})(request,
                                                                                                  *view_args,
                                                                                                  **view_kwargs)
 
@@ -30,6 +30,7 @@ class ExamCreateRoleBasedRedirectMiddleware(MiddlewareMixin):
         if request.path in target_urls:
             role = get_role(request.headers.get('Authorization'))
 
+
             if role in [1]:
                 return ExamViewSet.as_view({'post': 'create_exam'})(request, *view_args, **view_kwargs)
             return JsonResponse(data={"result": "", "error": "Permission denied", 'ok': False}, status=403)
@@ -38,7 +39,7 @@ class ExamCreateRoleBasedRedirectMiddleware(MiddlewareMixin):
 
 class ParticipantCreateRoleBasedRedirectMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
-        target_urls = [reverse('create_participant')]
+        target_urls = [reverse('participant')]
         if request.path in target_urls:
             role = get_role(request.headers.get('Authorization'))
 

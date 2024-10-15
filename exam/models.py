@@ -55,7 +55,8 @@ class Question(BaseModel):
 
     question = models.CharField(max_length=500)
     type = models.PositiveIntegerField(choices=QUESTION_TYPE, default=1)
-    correct_option = models.ForeignKey("Option", null=True, blank=True, on_delete=models.SET_NULL)
+    correct_option = models.ForeignKey("Option", null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='correctly_answered_questions')
 
     def __str__(self):
         return self.subject.name
@@ -67,7 +68,7 @@ class Question(BaseModel):
 
 
 class Option(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='options')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='question_options')
     text = models.CharField(max_length=255)
 
 
