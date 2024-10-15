@@ -1,13 +1,53 @@
 from exceptions.error_message import ErrorCodes
 from exceptions.exception import CustomApiException
-from .models import Subject, Question, Answers
-from .serializers import SubjectSerializer, QuestionSerializer, AnswerSerializer
+from .models import Subject, Question, Answers, Exam, Participant
+from .serializers import SubjectSerializer, QuestionSerializer, AnswerSerializer, ExamSerializer, ParticipantSerializer
 from rest_framework.viewsets import ViewSet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework import status
 
+class ExamViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Create exam',
+        operation_description='Create Exam',
+        request_body=ExamSerializer(),
+        responses={201: ExamSerializer()},
+        tags=['Exam']
+    )
+    def create_exam(self, request):
+        data = request.data
+        serializer = ExamSerializer(data=data, context={'request': request})
+        if not serializer.is_valid():
+            raise CustomApiException(error_code=ErrorCodes.VALIDATION_FAILED, message=serializer.errors)
+
+        serializer.save()
+        return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
+
+
+class ParticipantViewSet(ViewSet):
+    @swagger_auto_schema(
+        operation_summary='Create participant',
+        operation_description='Create participant',
+        request_body=ParticipantSerializer(),
+        responses={201: ParticipantSerializer()},
+        tags=['Participant']
+    )
+    def create_participant(self, request):
+        data = request.data
+        serializer = ParticipantSerializer(data=data, context={'request': request})
+        if not serializer.is_valid():
+            raise CustomApiException(error_code=ErrorCodes.VALIDATION_FAILED, message=serializer.errors)
+
+        exam_id = serializer.validated_data.get('exam')
+        participant = Participant.objects.filter(exam_id=exam_id).count()
+        exam = Exam.objects.filter(id=exam_id).first()
+        if participant >= exam.student_number:
+            raise CustomApiException(error_code=ErrorCodes.INVALID_INPUT, message="Exam participants reach the maximum value")
+
+        serializer.save()
+        return Response(data={'result': serializer.data, 'ok': True}, status=status.HTTP_201_CREATED)
 
 class SubjectViewSet(ViewSet):
     @swagger_auto_schema(
