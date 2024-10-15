@@ -9,7 +9,29 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import UserAnswer
+from .models import Exam, Question, UserAnswer, Option
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def submit_answer(self, request, exam_id, question_id):
+    question = get_object_or_404(Question, id=question_id)
+    
+    if request.method == 'POST':
+        if question.question_type == 'MCQ':
+            selected_option_id = request.POST.get('option')
+            selected_option = get_object_or_404(Option, id=selected_option_id)
+            user_answer = UserAnswer.objects.create(
+                user=request.user, 
+                question=question, 
+                selected_option=selected_option
+            )
+        elif question.question_type == 'OPEN':
+            open_answer = request.POST.get('open_answer')
+            user_answer = UserAnswer.objects.create(
+                user=request.user, 
+                question=question, 
+                open_answer=open_answer
+            )
 
 
 class ExamViewSet(ViewSet):
